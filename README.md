@@ -1,0 +1,1 @@
+# bmstu_sem_6_os
