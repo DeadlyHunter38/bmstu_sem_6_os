@@ -52,7 +52,7 @@ int my_func(const char *path_name, const struct stat *stat_ptr, int type, int de
 {
     //printf("my_func.\n");
     for (int i = 0; i < depth; i++){
-        printf("|   ");
+        printf("│   ");
     }
 
     switch(type)
