@@ -106,16 +106,6 @@ int lockfile(int fd)
     return fcntl(fd, F_SETLK, &fl);
 }
 
-void sighup(int signo){
-    printf("sighup.\n");
-    syslog(LOG_INFO, "Чтение конфигурационного файла.");
-}
-
-void sigterm(int signo){
-    printf("sigterm.\n");
-    syslog(LOG_INFO, "Получен сигнал SIGTERM; выход.");
-}
-
 void *thr_fn(void *arg)
 {
     int error, signo;

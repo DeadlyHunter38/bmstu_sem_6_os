@@ -11,9 +11,6 @@
 void daemonize(const char *cmd);
 int already_running(void);
 
-void sighup(int signo);
-void sigterm(int signo);
-
 void *thr_fn(void *arg);
 
 static sigset_t mask;

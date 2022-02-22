@@ -18,9 +18,7 @@ int main(int argc, char *argv[])
         cmd++;
     }
 
-    printf("cmd = %s\n", cmd);
-
-    daemonize("my_daemon");
+    daemonize(cmd);
 
     if (already_running()){
         syslog(LOG_ERR, "Демон уже запущен.");
