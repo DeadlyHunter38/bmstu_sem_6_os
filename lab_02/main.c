@@ -8,6 +8,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int error = do_path(argv[1], my_func, 0);
+    int error = do_path(argv[1], func, 0);
     return error;
 }

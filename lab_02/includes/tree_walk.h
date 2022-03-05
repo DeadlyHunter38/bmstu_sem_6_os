@@ -11,9 +11,7 @@
 #define FTW_DNR 3 /* каталог, недоступный для чтения */
 #define FTW_NS 4 /* файл, информацию о котором невозможно получить с помощью stat */
 
-typedef int My_func(const char *, const struct stat *, int, int);
-
-My_func my_func;
-int do_path(const char *, My_func *, int);
+int func(const char *path_name, const struct stat *stat_ptr, int type, int depth);
+int do_path(const char *path_name, int (*func)(const char *, const struct stat *, int, int), int depth);
 
 #endif
