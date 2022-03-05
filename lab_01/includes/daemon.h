@@ -7,12 +7,9 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <signal.h>
 
 void daemonize(const char *cmd);
 int already_running(void);
-
-void *thr_fn(void *arg);
-
-static sigset_t mask;
 
 #endif

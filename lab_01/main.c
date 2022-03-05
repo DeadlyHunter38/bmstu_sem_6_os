@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "./includes/daemon.h"
+
+static sigset_t mask;
+void *thr_fn(void *arg);
 
 int main(int argc, char *argv[])
 {
@@ -49,8 +53,36 @@ int main(int argc, char *argv[])
 
     long int ttime;
     while(true){
+        sleep(5);
         ttime = time (NULL);
         syslog(LOG_INFO, "Время: %s\n", ctime (&ttime));
     }
+    return 0;
+}
+
+void *thr_fn(void *arg)
+{
+    int error, signo;
+    for (;;)
+    {
+        error = sigwait(&mask, &signo);
+        if (error != 0){
+            syslog(LOG_ERR, "Ошибка вызова функции sigwait.");
+            exit(1);
+        }
+
+        switch (signo)
+        {
+            case SIGHUP:
+                syslog(LOG_INFO, "Чтение конфигурационного файла.");
+                break;
+            case SIGTERM:
+                syslog(LOG_INFO, "Получен сигнал SIGTERM; выход");
+                exit(0);
+            default:
+                syslog(LOG_INFO, "получен непредвиденный сигнал %d\n", signo);
+        }
+    }
+
     return 0;
 }

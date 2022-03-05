@@ -12,7 +12,7 @@
 #define LOCKMODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 
 int lockfile(int);
-void reread(void);
+
 
 void daemonize(const char *cmd)
 {
@@ -103,37 +103,5 @@ int lockfile(int fd)
     fl.l_start = 0;
     fl.l_whence = SEEK_SET;
     fl.l_len = 0;
-    return fcntl(fd, F_SETLK, &fl);
-}
-
-void *thr_fn(void *arg)
-{
-    int error, signo;
-    for (;;)
-    {
-        error = sigwait(&mask, &signo);
-        if (error != 0){
-            syslog(LOG_ERR, "ошибка вызова функции sigwait");
-            exit(1);
-        }
-
-        switch (signo)
-        {
-            case SIGHUP:
-                syslog(LOG_INFO, "Чтение конфигурационного файла.");
-                reread();
-                break;
-            case SIGTERM:
-                syslog(LOG_INFO, "Получен сигнал SIGTERM; выход");
-                exit(0);
-            default:
-                syslog(LOG_INFO, "получен непредвиденный сигнал %d\n", signo);
-        }
-    }
-
-    return 0;
-}
-
-void reread(void){
-    syslog(LOG_INFO, "reread function");
+    return fcntl(fd, F_SETLK, &fl); //F - Flag set lock, E - error
 }
