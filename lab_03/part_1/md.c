@@ -25,9 +25,9 @@ static int __init md_init(void)
 
 static void __exit md_exit(void){
     printk(KERN_INFO "+ Module is unloaded.");
-    printk(KERN_INFO "Current: pid = %d, name = %s, ppid = %d, pname = %s, state = %lu, prio = %d\n", 
+    printk(KERN_INFO "+ Current: pid = %d, name = %s, ppid = %d, pname = %s, state = %lu, prio = %d\n", 
            current->pid, current->comm, current->parent->pid, current->parent->comm,
-           task->state, task->prio);  
+           current->state, current->prio);  
 }
 
 module_init(md_init);

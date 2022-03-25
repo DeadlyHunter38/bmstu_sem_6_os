@@ -19,6 +19,6 @@ clean_all:
 	@rm -f *.ko *.mod *.symvers
 
 disclean: clean
-	@rm *.ko *.symvers
+	@rm *.ko *.symvers *.mod
 
 endif 
