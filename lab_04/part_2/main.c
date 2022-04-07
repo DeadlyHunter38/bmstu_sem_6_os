@@ -63,7 +63,7 @@ static ssize_t fortune_write(struct file *file, const char __user *buffer,
         return -EFAULT;
     }
 
-    printk(KERN_INFO "fortune: count - %ld", count);
+    printk(KERN_INFO "fortune: write; count - %ld", count);
     write_index += count;
     cookie_pot[write_index - 1] = 0;
 
@@ -89,6 +89,7 @@ static ssize_t fortune_read(struct file *file, char __user *buffer,
         return -EFAULT;
     }
 
+    printk(KERN_INFO "fortune: read");
     read_index += len;
     *file_offset += len;
     return len;
