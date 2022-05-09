@@ -7,6 +7,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <errno.h>
+#include <limits.h>
 
 #define _GNU_SOURCE
 #include <dirent.h>
@@ -28,5 +33,6 @@ void print_maps(const int pid);
 void print_io(const int pid);
 void print_comm(const int pid);
 void print_task(const int pid);
+void get_pagemap_info(const int pid);
 
 #endif

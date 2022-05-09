@@ -7,6 +7,7 @@ int do_path(const char *path_name, int (*func)(const char *, const struct stat *
             FILE *file, FILE *file_log);
 int func_tree(const char *path_name, const struct stat *stat_ptr, int type,
               int depth, FILE *file, FILE *file_log);
+void print_page(uint64_t address, uint64_t data, FILE *out);
 
 int get_pid(int argc, char *argv[])
 {
@@ -74,19 +75,17 @@ void print_fd(const int pid)
     fwrite(path_to_open, strlen(path_to_open), 1, file_log);
     fwrite(":\n", 1, 2, file_log);
     dp = opendir(path_to_open);
+    readdir(dp); //read "."
+    readdir(dp); //read ".."
     while ((dir_p = readdir(dp)) != NULL)
     {
-        if ((strcmp(dir_p->d_name, ".") != 0) &&
-            (strcmp(dir_p->d_name, "..") != 0))
-            {
-                sprintf(path, "%s%s", path_to_open, dir_p->d_name);
-                readlink(path, buffer, BUFFER_SIZE);
-                fwrite(dir_p->d_name, strlen(dir_p->d_name), 1, file_log);
-                fwrite(" -> ", 4, 1, file_log);
-                fwrite(buffer, strlen(buffer), 1, file_log);
-                fwrite("\n", 1, 1, file_log);
-                printf("%s -> %s\n", dir_p->d_name, buffer);
-            }
+        sprintf(path, "%s%s", path_to_open, dir_p->d_name);
+        readlink(path, buffer, BUFFER_SIZE);
+        fwrite(dir_p->d_name, strlen(dir_p->d_name), 1, file_log);
+        fwrite(" -> ", 4, 1, file_log);
+        fwrite(buffer, strlen(buffer), 1, file_log);
+        fwrite("\n", 1, 1, file_log);
+        //printf("%s -> %s\n", dir_p->d_name, buffer);
     }
     closedir(dp);
     fwrite("\n\n", 1, 2, file_log);
@@ -174,6 +173,82 @@ void print_task(const int pid)
 
     fclose(file);
     fclose(file_log);
+}
+
+void print_pagemap(const int pid)
+{
+    char path_to_open[PATH_MAX];
+    char buffer[BUFFER_SIZE] = {'\0'};
+
+    snprintf(path_to_open, PATH_MAX, "/proc/%d/pagemap", pid);  
+    read_link(path_to_open, "log.txt", "a", buffer);
+}
+
+void print_page(uint64_t address, uint64_t data, FILE *out)
+{
+    fprintf(out, "0x%-16lx : %-16lx %-10ld %-10ld %-10ld %-10ld\n", address,
+    data & (((uint64_t)1 << 55) - 1), (data >> 55) & 1,
+    (data >> 61) & 1, (data >> 62) & 1, (data >> 63) & 1);
+
+}
+
+void get_pagemap_info(const int pid)
+{
+    FILE *out = fopen("log.txt", "a");
+    fprintf(out, "PAGEMAP\n");
+    fprintf(out, " addr : pfn soft-dirty file/shared swapped present\n");
+
+    char path[PATH_MAX];
+    snprintf(path, PATH_MAX, "/proc/%d/maps", pid);
+    FILE *maps = fopen(path, "r");
+
+    snprintf(path, PATH_MAX, "/proc/%d/pagemap", pid);
+    int pm_fd = open(path, O_RDONLY);
+
+    char buf[BUFFER_SIZE + 1] = "\0";
+    int len;
+
+    // чтение maps
+    while ((len = fread(buf, 1, BUFFER_SIZE, maps)) > 0)
+    {
+        for (int i = 0; i < len; ++i)
+        if (buf[i] == 0) 
+            buf[i] = '\n';
+        buf[len] = '\0 ';
+
+        // проход по строкам из maps
+        // используем strtok_r вместо strtok для возможности разбиения на лексемы разных буферов
+        char *save_row;
+        char *row = strtok_r(buf, "\n", &save_row);
+        while (row)
+        {
+            // получение столбца участка адресного пространства
+            char *addresses = strtok(row, " ");
+            char *start_str, *end_str;
+
+            // получение начала и конца участка адресного пространства
+            if ((start_str = strtok(addresses, "-")) && (end_str = strtok(NULL, "-")))
+            {
+                uint64_t start = strtoul(start_str, NULL, 16);
+                uint64_t end = strtoul(end_str, NULL, 16);
+
+                for (uint64_t i = start; i < end; i += sysconf(_SC_PAGE_SIZE))
+                {
+                    uint64_t offset;
+                    // поиск смещения, по которому в pagemap находится информация о текущей странице
+                    uint64_t index = i / sysconf(_SC_PAGE_SIZE) * sizeof(offset);
+
+                    pread(pm_fd, &offset, sizeof(offset), index);
+                    print_page(i, offset, out);
+                }
+            }
+
+        row = strtok_r(NULL, "\n", &save_row);
+        }
+    }
+
+    fclose(maps);
+    close(pm_fd);
 }
 
 int do_path(const char *path_name, int (*func)(const char *, const struct stat *, int, int), int depth,

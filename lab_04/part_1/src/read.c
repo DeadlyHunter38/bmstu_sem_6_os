@@ -19,11 +19,11 @@ void read_file(char *path_to_open, char *file_out, char *file_mode, char *buffer
     {
         for (int i = 0; i < len; i++){
             if (buffer[i] == 0){
-                buffer[i] = '\0';
+                buffer[i] = '\n';
             }
         }
         
-        buffer[len - 1]= 0;
+        buffer[len - 1]= '\0';
         fwrite(buffer, strlen(buffer), 1, file_log);
         //printf("%s\n", buffer);
     }
