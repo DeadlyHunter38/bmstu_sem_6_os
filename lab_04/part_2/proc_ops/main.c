@@ -137,9 +137,5 @@ static void __exit fortune_module_exit(void)
     printk(KERN_INFO "fortune module is unloaded.\n");
 }
 
-
-
-
-
 module_init(fortune_module_init);
 module_exit(fortune_module_exit);
