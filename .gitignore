@@ -2,3 +2,16 @@
 *.exe
 *.o
 lab_04/part_1/log.txt
+*.sty
+*.clo
+*.cls
+*.layout
+*.bst
+*.fls
+*.aux
+*.fdb_latexmk
+*.gz
+*.toc
+*.log
+*.out
+*.exe
