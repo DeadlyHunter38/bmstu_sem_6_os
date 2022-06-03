@@ -16,7 +16,6 @@ int main(int argc, char *argv[])
     char buffer[BUFFER_SIZE];
 
     client_socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-    printf("client_socket_fd = %d\n", client_socket_fd);
     if (client_socket_fd == -1){
         perror("Ошибка: не удалось получить дескриптор сокета.\n");
         return -1;
