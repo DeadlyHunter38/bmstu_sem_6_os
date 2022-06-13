@@ -15,3 +15,6 @@ lab_04/part_1/log.txt
 *.log
 *.out
 *.exe
+*.ko
+*.mod
+*.symvers
