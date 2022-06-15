@@ -24,14 +24,12 @@ static char *keyboard_codes[] = {
 int dev_id;
 struct workqueue_struct *work_queue;
 struct work_struct keyboard_worker, sleep_worker;
-char scancode, status;
+static char scancode;
 
 char *keyboard_str;
 
 void keyboard_worker_handler(struct work_struct *work)
 {
-    scancode = inb(KEYBOARD_DATA_PORT);
-
     keyboard_str = keyboard_codes[(scancode & KEYBOARD_SCANCODE_MASK) - 1];
     printk(KERN_INFO "workqueue: код %d %s.\n", scancode & 0x7F, keyboard_str);
 }
@@ -47,6 +45,8 @@ irqreturn_t irq_handler(int irq, void *device)
 {
     if (irq == KEYBOARD_IRQ)
     {
+        scancode = inb(KEYBOARD_DATA_PORT);
+        
         queue_work(work_queue, &keyboard_worker);
         queue_work(work_queue, &sleep_worker);
         return IRQ_HANDLED;
