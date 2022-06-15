@@ -14,6 +14,7 @@ int main(void)
 {
     struct sockaddr_in client_addr;
     char buffer[BUFFER_SIZE];
+    size_t count_bytes;
 
     signal(SIGINT, unlink_socket_addr);
     client_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,7 +41,15 @@ int main(void)
             return -1;
         }
         fprintf(stdout, "Отправлено: %s", buffer);
-        fflush(stdout);
+        count_bytes = recv(client_socket_fd, &buffer, BUFFER_SIZE, 0);
+
+        if (count_bytes){
+            printf("Получено сообщение от сервера: %s\n", buffer);
+        }
+        else{
+            printf("Сообщение от сервера не получено.\n");
+        }
+
         sleep(3);
     }
 }

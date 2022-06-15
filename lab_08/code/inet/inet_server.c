@@ -20,6 +20,7 @@ int main(void)
     fd_set read_fd_set;
     int client_fd_sockets[MAX_AMOUNT_CLIENTS] = {0};
     int max_socket_fd, new_socket_fd, flag_insert;
+    size_t count_bytes;
 
     server_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -92,7 +93,7 @@ int main(void)
         {
             if (client_fd_sockets[i] && FD_ISSET(client_fd_sockets[i], &read_fd_set))
             {
-                size_t count_bytes = recv(client_fd_sockets[i], &buffer, BUFFER_SIZE, 0);
+                count_bytes = recv(client_fd_sockets[i], &buffer, BUFFER_SIZE, 0);
                 if (!count_bytes){
                     //соединение разорвано
                     printf("Соединение потеряно с клиентом (файловый дескриптор %d)\n", client_fd_sockets[i]);
@@ -103,6 +104,8 @@ int main(void)
                 else{
                     buffer[count_bytes] = 0;
                     printf("Получено сообщение от клиента (файловый дескриптор %d): %s\n", client_fd_sockets[i], buffer);
+                    snprintf(buffer, BUFFER_SIZE, "Сообщение сервером получено.\n");
+                    send(client_fd_sockets[i], buffer, strlen(buffer), 0);
                 }
             }
         }
