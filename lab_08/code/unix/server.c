@@ -1,52 +1,60 @@
+#include <sys/types.h> 
+#include <sys/socket.h>
+#include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <stdlib.h>
-#include "socket.h"
+#include <sys/un.h>
+#include <unistd.h>
 
-static int server_socket_fd;
+#define SOCKET "my_socket.soc"
+#define MSG_SIZE 256
 
-void unlink_socket_addr(int signal_number)
+char *ans = "OK";
+
+static int sockfd;
+
+void close_socket(int sig) 
 {
-    close(server_socket_fd);
-    unlink(SOCKET_NAME);
+    close(sockfd);
+    unlink(SOCKET);
     exit(0);
 }
 
 int main(void)
 {
-    signal(SIGINT, unlink_socket_addr);
-    struct sockaddr_un server_un_addr;
-    char recv_buffer[BUFFER_SIZE];
-    int flag_stop = 0;
+    struct sockaddr addr, rcvr_name;
+    char msg[MSG_SIZE];
+    int namelen, count_bytes;
 
-    server_socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+    signal(SIGINT, close_socket);
 
-    if (server_socket_fd == -1){
-        perror("Ошибка: не удалось получить дескриптор сокета.\n");
+	sockfd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (sockfd < 0){
+		perror("Ошибка: не удалось получить дескриптор сокета.\n");
         return -1;
-    }
+	}
+	
+	addr.sa_family = AF_UNIX;	
+	strcpy(addr.sa_data, SOCKET);
 
-    server_un_addr.sun_family = AF_UNIX;
-    strncpy(server_un_addr.sun_path, SOCKET_NAME, sizeof(server_un_addr.sun_path) - 1);
-    if (bind(server_socket_fd, (const struct sockaddr *) &server_un_addr, sizeof(server_un_addr)) == -1){
-        perror("Ошибка: не удалось назначить сокету локальный адрес.\n");
-        
-        close(server_socket_fd);
-        return -1;
-    }
-
-    fprintf(stdout, "Сервер находится в режиме прослушивания. Для завершения нажмите Ctrl + C.\n");
-    while(flag_stop == 0)
-    {
-        size_t count_bytes = recv(server_socket_fd, recv_buffer, sizeof(recv_buffer) - 1, 0);
-        if (count_bytes == -1){
-            perror("Ошибка: не удалось получить сообщение.\n");
-            close(server_socket_fd);
-            unlink(SOCKET_NAME);
-            flag_stop = -1;
-        }
-        recv_buffer[count_bytes] = 0;
-        printf("Server get message: %s\n", recv_buffer);
-    }
-
-    return flag_stop;
+	if (bind(sockfd, &addr, sizeof(addr)) < 0)
+	{
+		perror("Bind error");
+		return -1;
+	}
+	
+	namelen = sizeof(rcvr_name);
+	fprintf(stdout, "Сервер находится в режиме прослушивания. Для завершения нажмите Ctrl + C.\n");
+	for(;;)
+	{
+		count_bytes = recvfrom(sockfd, msg, MSG_SIZE - 1, 0, &rcvr_name, &namelen);
+        printf("sa_family = %d, sa_data = %s; ", rcvr_name.sa_family, rcvr_name.sa_data);
+		sendto(sockfd, ans, strlen(ans), 0, &rcvr_name, sizeof(rcvr_name));
+		msg[count_bytes] = '\0';
+        printf("Получено сообщение от клиента: %s\n", msg);
+	}
+	
+	
+	return 0;
 }

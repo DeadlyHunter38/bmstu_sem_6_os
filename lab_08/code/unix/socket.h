@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define SOCKET_NAME "socket.soc"
+#define SOCKET_SERVER_NAME "socket_server.soc"
+#define SOCKET_CLIENT_NAME "socket_client.soc"
 #define BUFFER_SIZE 128
 
 #endif

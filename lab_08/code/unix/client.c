@@ -1,41 +1,53 @@
-#include "socket.h"
+#include <sys/types.h> 
+#include <sys/socket.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
-void fill_message_client(char buffer[BUFFER_SIZE], int argc, char *argv[])
+#define SERV_SOCKET "my_socket.soc"
+#define SOCKET "soccl.soc"
+#define MSG_SIZE 256
+
+int main(void)
 {
-    snprintf(buffer, BUFFER_SIZE, "Message from process %d; ", getpid());
-    if (argc >= 2){
-        strncat(buffer, argv[1], BUFFER_SIZE - strlen(buffer));
-    }
-}
+    struct sockaddr serv_addr, addr;
+    char msg[MSG_SIZE];
+    int namelen;
+	struct sockaddr rcvr_name;
 
-int main(int argc, char *argv[])
-{
-    int client_socket_fd;
-    int error;
-    struct sockaddr_un un_addr;
-    char buffer[BUFFER_SIZE];
-
-    client_socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-    if (client_socket_fd == -1){
-        perror("Ошибка: не удалось получить дескриптор сокета.\n");
+	int socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (socket_fd < 0){
+		perror("Ошибка: не удалось получить дескриптор сокета.\n");
         return -1;
-    }
+	}
+	
+    serv_addr.sa_family = AF_UNIX,
+	strcpy(serv_addr.sa_data, SERV_SOCKET);
 
-    un_addr.sun_family = AF_UNIX;
-    strncpy(un_addr.sun_path, SOCKET_NAME, sizeof(un_addr.sun_path) - 1);
-
-    fill_message_client(buffer, argc, argv);
-
-    if (connect(client_socket_fd, (const struct sockaddr *) &un_addr, sizeof(un_addr)) == -1){
-        perror("Ошибка: не удалось подключиться к серверу.");
+	addr.sa_family = AF_UNIX,
+	strcpy(addr.sa_data, SOCKET);
+	
+	if (bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr)) < 0){
+		perror("Ошибка: не удалось подключиться к серверу.");
         return -1;
-    }
+	}
 
-    if (send(client_socket_fd, buffer, strlen(buffer), 0) == -1){
-        perror("Ошибка: не удалось отправить сообщение.");
-        return -1;
-    }
+    snprintf(msg, MSG_SIZE, "процесс %d; ", getpid());
+	
+	sendto(socket_fd, &msg, strlen(msg), 0, (struct sockaddr *)&serv_addr, strlen(serv_addr.sa_data) + sizeof(serv_addr.sa_family));
+	int count_bytes = recvfrom(socket_fd, msg, MSG_SIZE - 1, 0, (struct sockaddr *)&rcvr_name, &namelen);
 
-    close(client_socket_fd);
-    return 0;
+    if (count_bytes){
+        printf("sa_family = %d, sa_data = %s; ", rcvr_name.sa_family, rcvr_name.sa_data);
+        msg[count_bytes] = 0;
+        printf("Получено сообщение от сервера: %s\n", msg);
+    }
+    else{
+        printf("Сообщение от сервера не получено.\n");
+    }
+	
+	close(socket_fd);
+    unlink(SOCKET);
+	
+	return 0;
 }
